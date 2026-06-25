@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-// Mock Data for Managed Events
 const INITIAL_MANAGED_EVENTS = [
   {
-    id: 1,
+    id: '65c8a1b2e4b0f2a1c8f90123',
     title: 'Hack-O-Sphere 2026',
     category: 'Technical',
     date: '2026-07-15',
@@ -14,7 +13,7 @@ const INITIAL_MANAGED_EVENTS = [
     status: 'Active',
   },
   {
-    id: 2,
+    id: '65c8a1b2e4b0f2a1c8f90124',
     title: 'Spandan: Cultural Fest',
     category: 'Cultural',
     date: '2026-08-02',
@@ -24,7 +23,7 @@ const INITIAL_MANAGED_EVENTS = [
     status: 'Upcoming',
   },
   {
-    id: 3,
+    id: '65c8a1b2e4b0f2a1c8f90125',
     title: 'AI & ML Workshop',
     category: 'Workshop',
     date: '2026-05-10',
@@ -37,25 +36,25 @@ const INITIAL_MANAGED_EVENTS = [
 
 const ManageEvents = () => {
   const [events, setEvents] = useState(INITIAL_MANAGED_EVENTS);
+  const navigate = useNavigate();
 
-  // Delete Event Handler
   const handleDelete = (id, title) => {
     if (window.confirm(`Kya aap sach mein "${title}" event ko delete karna chahte hain?`)) {
       setEvents(events.filter((event) => event.id !== id));
     }
   };
 
-  // Status Color Helper
+  // ✅ Real eventId ke saath attendance page pe navigate karo
+  const handleAttendance = (eventId) => {
+    navigate(`/organizer/attendance/${eventId}`);
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-700';
-      case 'Upcoming':
-        return 'bg-blue-100 text-blue-700';
-      case 'Completed':
-        return 'bg-slate-100 text-slate-600';
-      default:
-        return 'bg-amber-100 text-amber-700';
+      case 'Active':    return 'bg-green-100 text-green-700';
+      case 'Upcoming':  return 'bg-blue-100 text-blue-700';
+      case 'Completed': return 'bg-slate-100 text-slate-600';
+      default:          return 'bg-amber-100 text-amber-700';
     }
   };
 
@@ -75,7 +74,7 @@ const ManageEvents = () => {
         </Link>
       </div>
 
-      {/* Events Table Container */}
+      {/* Events Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -92,7 +91,7 @@ const ManageEvents = () => {
               {events.length > 0 ? (
                 events.map((event) => (
                   <tr key={event.id} className="hover:bg-slate-50/40 transition">
-                    {/* Title & Category */}
+
                     <td className="p-4">
                       <div className="font-bold text-slate-800 text-base">{event.title}</div>
                       <span className="inline-block text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md mt-1">
@@ -100,7 +99,6 @@ const ManageEvents = () => {
                       </span>
                     </td>
 
-                    {/* Date & Venue */}
                     <td className="p-4">
                       <div className="flex items-center gap-1.5 font-medium text-slate-600">
                         <span>📅</span> {event.date}
@@ -110,35 +108,43 @@ const ManageEvents = () => {
                       </div>
                     </td>
 
-                    {/* Registrations Progress */}
                     <td className="p-4">
-                      <div className="flex items-center justify-between text-xs font-bold text-slate-500 mb-1">
-                        <span>{event.registrations} / {event.capacity} Seats</span>
+                      <div className="text-xs font-bold text-slate-500 mb-1">
+                        {event.registrations} / {event.capacity} Seats
                       </div>
                       <div className="w-32 bg-slate-100 h-2 rounded-full overflow-hidden">
                         <div
                           className="bg-indigo-600 h-full rounded-full"
                           style={{ width: `${(event.registrations / event.capacity) * 100}%` }}
-                        ></div>
+                        />
                       </div>
                     </td>
 
-                    {/* Status Badge */}
                     <td className="p-4">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${getStatusBadge(event.status)}`}>
                         ● {event.status}
                       </span>
                     </td>
 
-                    {/* Action Buttons */}
                     <td className="p-4 text-right space-x-2 whitespace-nowrap">
+
+                      {/* ✅ Attendance Button — real eventId pass hoga */}
                       <button
-                        onClick={() => alert(`Editing features for "${event.title}" coming soon!`)}
+                        onClick={() => handleAttendance(event.id)}
+                        className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition"
+                        title="Mark Attendance"
+                      >
+                        👥
+                      </button>
+
+                      <button
+                        onClick={() => alert(`Editing "${event.title}" coming soon!`)}
                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition"
                         title="Edit Event"
                       >
                         ✏️
                       </button>
+
                       <button
                         onClick={() => handleDelete(event.id, event.title)}
                         className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition"
@@ -146,6 +152,7 @@ const ManageEvents = () => {
                       >
                         🗑️
                       </button>
+
                     </td>
                   </tr>
                 ))

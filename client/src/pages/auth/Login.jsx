@@ -12,25 +12,25 @@ const teamMembers = [
     image: "/team/surya.jpeg",
   },
   {
-    name: "Rahul Kumar",
+    name: "Gopal Kumar Gond",
     country: "India",
     role: "Backend Developer",
     skills: ["Node.js", "Express", "MongoDB", "REST API"],
-    image: "/team/rahul.png",
+    image: "/team/rahul.jpg",
   },
   {
     name: "Satyam Yadav",
     country: "India",
     role: "AI, Documentation & Business Module",
     skills: ["AI", "Figma", "Documentation"],
-    image: "/team/priya.png",
+    image: "/team/priya.jpg",
   },
   {
     name: "Jaiveer Tanwar",
     country: "India",
     role: "Project Manager",
     skills: ["Agile", "Scrum", "Leadership"],
-    image: "/team/aman.png",
+    image: "/team/aman.jpg",
   },
 ];
 
@@ -58,6 +58,7 @@ const Login = () => {
       const { token, user } = res.data;
 
       localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
       login(user);
 
       // ✅ user.role se redirect (server verified)
