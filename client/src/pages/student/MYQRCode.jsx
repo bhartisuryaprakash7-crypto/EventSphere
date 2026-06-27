@@ -1,61 +1,131 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
-
-import { saveAttendance, fetchAttendanceByEvent } from "../../services/attendanceService";
+import API from "../../services/eventService";
 
 function MyQRCode() {
 
   const { eventId } = useParams();
 
-  const [token, setToken] =
-    useState("");
+  const [qrData, setQrData] = useState(null);
+
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
 
-    const fetchQR = async () => {
+    const loadQR = async () => {
 
       try {
 
-        const res =
-          await attendanceService
-            .getQRCode(eventId);
+        // Logged in user
 
-        setToken(
-          res.data.token
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        // Find student's registration
+
+        const res = await API.get("/registrations/mine");
+
+        const registration = res.data.find(
+
+          (item) => item.event._id === eventId
+
         );
 
-      } catch (error) {
+        if (!registration) {
 
-        console.log(error);
+          alert("You are not registered for this event.");
+
+          return;
+
+        }
+
+        const qr = {
+
+          studentId: user._id,
+
+          registrationId: registration._id,
+
+          eventId,
+
+          studentName: user.name,
+
+          rollNumber: user.rollNumber,
+
+        };
+
+        setQrData(qr);
+
+      } catch (err) {
+
+        console.log(err);
+
+      } finally {
+
+        setLoading(false);
 
       }
+
     };
 
-    fetchQR();
+    loadQR();
 
   }, [eventId]);
 
+  if (loading) {
+
+    return (
+      <div className="p-10 text-center">
+        Loading QR...
+      </div>
+    );
+
+  }
+
   return (
 
-    <div className="p-6">
+    <div className="max-w-lg mx-auto mt-10">
 
-      <div className="bg-white p-6 rounded-xl shadow">
+      <div className="bg-white rounded-xl shadow-lg p-8 text-center">
 
-        <h2 className="text-2xl font-bold mb-5">
+        <h1 className="text-3xl font-bold mb-6">
+
           My Attendance QR
-        </h2>
 
-        {token ? (
+        </h1>
 
-          <QRCodeCanvas
-            value={token}
-            size={250}
-          />
+        {qrData ? (
+
+          <>
+
+            <QRCodeCanvas
+
+              value={JSON.stringify(qrData)}
+
+              size={280}
+
+            />
+
+            <p className="mt-6 font-semibold">
+
+              {qrData.studentName}
+
+            </p>
+
+            <p className="text-slate-500">
+
+              {qrData.rollNumber}
+
+            </p>
+
+          </>
 
         ) : (
 
-          <p>Loading QR...</p>
+          <p>
+
+            QR Code Not Available
+
+          </p>
 
         )}
 
@@ -64,6 +134,7 @@ function MyQRCode() {
     </div>
 
   );
+
 }
 
 export default MyQRCode;

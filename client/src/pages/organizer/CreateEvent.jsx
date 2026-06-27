@@ -1,5 +1,6 @@
 
-import { useState } from 'react';
+import { useState } from "react";
+import { createEvent } from "../../services/eventService";
 
 const CreateEvent = () => {
   const [formData, setFormData] = useState({
@@ -17,23 +18,34 @@ const CreateEvent = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Event Created Data:', formData);
-    alert(`🎉 Event "${formData.title}" created successfully! (Check console for data)`);
-    
-    // Form reset karne ke liye
-    setFormData({
-      title: '',
-      category: 'Technical',
-      date: '',
-      time: '',
-      venue: '',
-      description: '',
-      capacity: '',
-      tags: '',
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    await createEvent({
+      ...formData,
+      tags: formData.tags.split(",").map(tag => tag.trim())
     });
-  };
+
+    alert("✅ Event Created Successfully");
+
+    setFormData({
+      title: "",
+      category: "Technical",
+      date: "",
+      time: "",
+      venue: "",
+      description: "",
+      capacity: "",
+      tags: "",
+    });
+
+  } catch (error) {
+    console.error(error);
+    alert("❌ Event creation failed");
+  }
+};
+
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

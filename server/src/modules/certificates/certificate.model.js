@@ -1,14 +1,22 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const certificateSchema = new mongoose.Schema(
-  {
-    event:       { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
-    student:     { type: mongoose.Schema.Types.ObjectId, ref: 'User',  required: true },
-    fileUrl:     { type: String, required: true },
-    issuedAt:    { type: Date, default: Date.now },
-    uniqueCode:  { type: String, unique: true },
-  },
-  { timestamps: true }
-);
+const CertificateSchema = new mongoose.Schema({
+  student:      { type: mongoose.Schema.Types.ObjectId, ref: "User",         required: true },
+  event:        { type: mongoose.Schema.Types.ObjectId, ref: "Event",        required: true },
+  registration: { type: mongoose.Schema.Types.ObjectId, ref: "Registration", required: true },
+  credentialId: { type: String, unique: true },
+  issuedAt:     { type: Date, default: Date.now },
+}, { timestamps: true });
 
-module.exports = mongoose.model('Certificate', certificateSchema);
+CertificateSchema.pre("save", function (next) {
+  if (!this.credentialId) {
+    this.credentialId =
+      "CRD-" +
+      Date.now().toString(36).toUpperCase() +
+      "-" +
+      Math.random().toString(36).slice(2, 5).toUpperCase();
+  }
+  next();
+});
+
+module.exports = mongoose.model("Certificate", CertificateSchema);

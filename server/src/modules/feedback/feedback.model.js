@@ -1,14 +1,20 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const feedbackSchema = new mongoose.Schema(
-  {
-    event:   { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
-    student: { type: mongoose.Schema.Types.ObjectId, ref: 'User',  required: true },
-    rating:  { type: Number, min: 1, max: 5, required: true },
-    comment: { type: String, trim: true },
+const FeedbackSchema = new mongoose.Schema({
+  student: { type: mongoose.Schema.Types.ObjectId, ref: "User",  required: true },
+  event:   { type: mongoose.Schema.Types.ObjectId, ref: "Event", required: true },
+  ratings: {
+    overall:      { type: Number, min: 1, max: 5, required: true },
+    organisation: { type: Number, min: 1, max: 5 },
+    content:      { type: Number, min: 1, max: 5 },
+    venue:        { type: Number, min: 1, max: 5 },
+    food:         { type: Number, min: 1, max: 5 },
   },
-  { timestamps: true }
-);
+  comment:   { type: String, maxlength: 1000 },
+  anonymous: { type: Boolean, default: false },
+}, { timestamps: true });
 
-feedbackSchema.index({ event: 1, student: 1 }, { unique: true });
-module.exports = mongoose.model('Feedback', feedbackSchema);
+// One feedback per student per event
+FeedbackSchema.index({ student: 1, event: 1 }, { unique: true });
+
+module.exports = mongoose.model("Feedback", FeedbackSchema);

@@ -1,30 +1,76 @@
-const Feedback = require('./feedback.model');
+const Feedback     = require("./feedback.model");
+const Registration = require("../registrations/registration.model");
 
-const submitFeedback = async (req, res) => {
+// GET /api/feedback/check/:eventId
+exports.checkFeedback = async (req, res) => {
   try {
-    const fb = await Feedback.create({
-      event:   req.params.eventId,
+    const exists = await Feedback.findOne({
       student: req.user._id,
-      rating:  req.body.rating,
-      comment: req.body.comment,
+      event:   req.params.eventId,
     });
-    res.status(201).json({ message: 'Feedback submitted', feedback: fb });
-  } catch (error) {
-    if (error.code === 11000) return res.status(400).json({ message: 'Already submitted feedback' });
-    res.status(500).json({ message: error.message });
+    res.json({ exists: !!exists });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-const getEventFeedback = async (req, res) => {
+// POST /api/feedback
+exports.submitFeedback = async (req, res) => {
+  const { eventId, ratings, comment, anonymous } = req.body;
+
+  if (!eventId || !ratings?.overall) {
+    return res.status(400).json({ message: "eventId and overall rating are required." });
+  }
+
+  try {
+    // Verify student actually attended the event
+    const reg = await Registration.findOne({
+      student: req.user._id,
+      event:   eventId,
+      status:  "Attended",
+    });
+
+    if (!reg) {
+      return res.status(403).json({
+        message: "You can only submit feedback for events you attended.",
+      });
+    }
+
+    const feedback = await Feedback.create({
+      student:   req.user._id,
+      event:     eventId,
+      ratings,
+      comment:   comment?.trim(),
+      anonymous: anonymous || false,
+    });
+
+    res.status(201).json({ message: "Feedback submitted successfully.", feedback });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ message: "You have already submitted feedback for this event." });
+    }
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// GET /api/feedback/event/:eventId  (organizer/admin use)
+exports.getEventFeedback = async (req, res) => {
   try {
     const feedbacks = await Feedback.find({ event: req.params.eventId })
-      .populate('student', 'name');
+      .populate({
+        path:   "student",
+        select: "name",
+      })
+      .sort({ createdAt: -1 });
 
-    const avg = feedbacks.reduce((sum, f) => sum + f.rating, 0) / (feedbacks.length || 1);
-    res.json({ feedbacks, averageRating: avg.toFixed(1), total: feedbacks.length });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    // Hide student name if anonymous
+    const data = feedbacks.map((f) => ({
+      ...f.toObject(),
+      student: f.anonymous ? { name: "Anonymous" } : f.student,
+    }));
+
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
   }
 };
-
-module.exports = { submitFeedback, getEventFeedback };

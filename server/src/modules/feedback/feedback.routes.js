@@ -1,11 +1,10 @@
-const express = require('express');
-const { protect } = require('../../middleware/authMiddleware');
-const { authorizeRoles } = require('../../middleware/roleMiddleware');
-const { submitFeedback, getEventFeedback } = require('./feedback.controller');
+const express    = require("express");
+const router     = express.Router();
+const { protect } = require("../../middleware/authMiddleware");
+const ctrl       = require("./feedback.controller");
 
-const router = express.Router();
-
-router.post('/event/:eventId',  protect, authorizeRoles('student'),                      submitFeedback);
-router.get('/event/:eventId',   protect, authorizeRoles('organizer', 'admin', 'faculty'), getEventFeedback);
+router.get("/check/:eventId",  protect, ctrl.checkFeedback);
+router.get("/event/:eventId",  protect, ctrl.getEventFeedback);
+router.post("/",               protect, ctrl.submitFeedback);
 
 module.exports = router;

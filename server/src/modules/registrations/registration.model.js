@@ -1,50 +1,18 @@
-const mongoose = require('mongoose');
-const { REGISTRATION_STATUS } = require('../../constants');
+const mongoose = require("mongoose");
 
-const registrationSchema = new mongoose.Schema(
-{
-  event: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Event',
-    required: true
-  },
+const RegistrationSchema = new mongoose.Schema({
+  student:   { type: mongoose.Schema.Types.ObjectId, ref: "User",  required: true },
+  event:     { type: mongoose.Schema.Types.ObjectId, ref: "Event", required: true },
+  ticketId:  { type: String, unique: true },
+  status:    { type: String, enum: ["Upcoming", "Attended", "Absent"], default: "Upcoming" },
+  registeredAt: { type: Date, default: Date.now },
+}, { timestamps: true });
 
-  student: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-
-  qrToken: {
-    type: String,
-    unique: true,
-    sparse: true
-  },
-
-  qrGeneratedAt: {
-    type: Date
-  },
-
-  status: {
-    type: String,
-    enum: Object.values(REGISTRATION_STATUS),
-    default: REGISTRATION_STATUS.REGISTERED
-  },
-
-  registeredAt: {
-    type: Date,
-    default: Date.now
+RegistrationSchema.pre("save", function (next) {
+  if (!this.ticketId) {
+    this.ticketId = "REG-" + Math.random().toString(36).slice(2, 7).toUpperCase();
   }
-},
-{ timestamps: true }
-);
+  next();
+});
 
-registrationSchema.index(
-  { event: 1, student: 1 },
-  { unique: true }
-);
-
-module.exports = mongoose.model(
-  'Registration',
-  registrationSchema
-);
+module.exports = mongoose.model("Registration", RegistrationSchema);

@@ -1,56 +1,58 @@
-const mongoose = require('mongoose');
-const { EVENT_STATUS } = require('../../constants');
+const mongoose = require("mongoose");
 
 const eventSchema = new mongoose.Schema(
-  {
-    title: { type: String, required: true, trim: true },
-    description: { type: String, required: true },
-    banner: { type: String, default: '' },
-
-    organizer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+{
+    title: {
+        type: String,
+        required: true
     },
-    approvedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+
+    category: {
+        type: String,
+        required: true
+    },
+
+    date: {
+        type: Date,
+        required: true
+    },
+
+    time: {
+        type: String,
+        required: true
     },
 
     venue: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Venue',
-    },
-    department: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Department',
+        type: String,
+        required: true
     },
 
-    startDate: { type: Date, required: true },
-    endDate:   { type: Date, required: true },
+    description: {
+        type: String,
+        required: true
+    },
 
-    maxParticipants: { type: Number, default: 100 },
-    registrationDeadline: { type: Date },
+    capacity: {
+        type: Number,
+        required: true
+    },
 
     tags: [String],
 
-    status: {
-      type: String,
-      enum: Object.values(EVENT_STATUS),
-      default: EVENT_STATUS.PENDING,
+    organizer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
     },
 
-    isPublic: { type: Boolean, default: true },
-  },
-  { timestamps: true }
-);
+    status: {
+        type: String,
+        enum: ["pending","approved","rejected"],
+        default: "pending"
+    }
 
-// Virtual: registered count (populated separately)
-eventSchema.virtual('registeredCount', {
-  ref: 'Registration',
-  localField: '_id',
-  foreignField: 'event',
-  count: true,
+},
+{
+    timestamps: true
 });
 
-module.exports = mongoose.model('Event', eventSchema);
+module.exports = mongoose.model("Event", eventSchema);

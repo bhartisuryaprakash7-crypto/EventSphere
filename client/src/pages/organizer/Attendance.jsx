@@ -1,62 +1,126 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Html5QrcodeScanner } from "html5-qrcode";
-import { saveAttendance, fetchAttendanceByEvent } from "../../services/attendanceService";
+import {
+  saveAttendance,
+  fetchAttendanceByEvent,
+} from "../../services/attendanceService";
 
 function OrganizerAttendance() {
-  const { eventId } = useParams(); // ✅ URL se real eventId aayegi
+  const { eventId } = useParams();
+
   const [attendanceList, setAttendanceList] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-  // const isScanning = useRef(false); // ✅ duplicate scan rokne ke liye
 
-  // Fetch initial attendance list from Database
+  const isScanning = useRef(false);
+
+  // ===========================
+  // Fetch Attendance List
+  // ===========================
   useEffect(() => {
     if (!eventId) return;
-    fetchAttendanceByEvent(eventId)
-      .then((res) => setAttendanceList(res.data))
-      .catch((err) => console.error(err));
+
+    const loadAttendance = async () => {
+      try {
+        const res = await fetchAttendanceByEvent(eventId);
+
+        if (res.success) {
+          setAttendanceList(res.data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadAttendance();
   }, [eventId]);
 
-  // QR Scanner Initialization
+  // ===========================
+  // QR Scanner
+  // ===========================
   useEffect(() => {
     if (!eventId) return;
 
-    const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
+    const scanner = new Html5QrcodeScanner(
+      "reader",
+      {
+        fps: 10,
+        qrbox: 250,
+      },
+      false
+    );
 
     scanner.render(
       async (decodedText) => {
-        // ✅ Agar already ek scan process ho raha hai to ignore karo
         if (isScanning.current) return;
+
         isScanning.current = true;
 
-        const [roll, name] = decodedText.split("|");
-        if (!roll || !name) {
-          isScanning.current = false;
-          return;
-        }
-
         try {
+          let qrData;
+
+          // Try JSON QR
+          try {
+            qrData = JSON.parse(decodedText);
+          } catch {
+            // Old Format QR
+            const [rollNumber, studentName] = decodedText.split("|");
+
+            qrData = {
+              rollNumber,
+              studentName,
+            };
+          }
+
+          if (!qrData.rollNumber || !qrData.studentName) {
+            throw new Error("Invalid QR Code");
+          }
+
           const response = await saveAttendance({
             eventId,
-            rollNumber: roll,
-            studentName: name,
+            studentId: qrData.studentId,
+            registrationId: qrData.registrationId,
+            rollNumber: qrData.rollNumber,
+            studentName: qrData.studentName,
           });
 
           if (response.success) {
             setAttendanceList((prev) => {
-              if (prev.some((item) => item.rollNumber === roll)) return prev;
+              const alreadyExists = prev.find(
+                (item) => item.rollNumber === qrData.rollNumber
+              );
+
+              if (alreadyExists) return prev;
+
               return [...prev, response.data];
             });
+
+            setSuccessMsg(
+              `✅ ${qrData.studentName} (${qrData.rollNumber}) Attendance Marked`
+            );
+
             setErrorMsg("");
-            setSuccessMsg(`✅ ${name} (${roll}) attendance marked!`);
-            setTimeout(() => setSuccessMsg(""), 3000);
+
+            setTimeout(() => {
+              setSuccessMsg("");
+            }, 3000);
           }
-        } catch (error) {
-          setErrorMsg(error.response?.data?.message || "Error scanning QR");
+        } catch (err) {
+          console.log(err);
+
           setSuccessMsg("");
+
+          setErrorMsg(
+            err.response?.data?.message ||
+              err.message ||
+              "Attendance Failed"
+          );
+
+          setTimeout(() => {
+            setErrorMsg("");
+          }, 3000);
         } finally {
-          // ✅ 2 seconds baad next student ka QR scan allow karo
           setTimeout(() => {
             isScanning.current = false;
           }, 2000);
@@ -66,80 +130,135 @@ function OrganizerAttendance() {
     );
 
     return () => {
-      scanner.clear().catch((err) => console.error("Scanner clear error", err));
+      scanner.clear().catch(() => {});
     };
   }, [eventId]);
 
-  // ✅ Agar eventId nahi mila to error show karo
   if (!eventId) {
     return (
-      <div className="p-6 text-center text-red-500 font-semibold">
-        ❌ Event ID not found. Please navigate from Manage Events page.
+      <div className="p-6 text-center text-red-600 font-semibold">
+        Event ID Not Found
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-center">Event Attendance Management</h1>
+    <div className="p-6 max-w-6xl mx-auto">
+
+      <h1 className="text-3xl font-bold text-center mb-8">
+        Event Attendance Management
+      </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Scanner Component */}
-        <div className="bg-white p-5 rounded-xl shadow-md border col-span-1">
-          <h2 className="text-xl font-semibold mb-4">Scan Student QR</h2>
+
+        {/* QR Scanner */}
+
+        <div className="bg-white rounded-xl shadow p-5 border">
+
+          <h2 className="text-xl font-semibold mb-4">
+            Scan Student QR
+          </h2>
+
           <div id="reader"></div>
 
-          {/* Success Message */}
           {successMsg && (
-            <p className="text-green-600 mt-2 text-sm font-medium">{successMsg}</p>
+            <div className="mt-4 text-green-600 font-semibold">
+              {successMsg}
+            </div>
           )}
 
-          {/* Error Message */}
           {errorMsg && (
-            <p className="text-red-500 mt-2 text-sm font-medium">❌ {errorMsg}</p>
+            <div className="mt-4 text-red-600 font-semibold">
+              {errorMsg}
+            </div>
           )}
+
         </div>
 
-        {/* Attendance Table Component */}
-        <div className="bg-white p-5 rounded-xl shadow-md border col-span-2">
+        {/* Attendance Table */}
+
+        <div className="bg-white rounded-xl shadow p-5 border md:col-span-2">
+
           <h2 className="text-xl font-semibold mb-4">
-            Live Attendance Roll ({attendanceList.length})
+            Live Attendance ({attendanceList.length})
           </h2>
+
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+
+            <table className="w-full border-collapse">
+
               <thead>
+
                 <tr className="bg-blue-600 text-white">
-                  <th className="p-3 border">Roll Number</th>
-                  <th className="p-3 border">Name</th>
-                  <th className="p-3 border">Status</th>
+
+                  <th className="p-3 border">
+                    Roll Number
+                  </th>
+
+                  <th className="p-3 border">
+                    Student Name
+                  </th>
+
+                  <th className="p-3 border">
+                    Status
+                  </th>
+
                 </tr>
+
               </thead>
+
               <tbody>
+
                 {attendanceList.length === 0 ? (
+
                   <tr>
-                    <td colSpan="3" className="p-4 text-center text-slate-400">
-                      No attendance marked yet. Scan a QR code to begin.
+
+                    <td
+                      colSpan="3"
+                      className="text-center p-6 text-slate-400"
+                    >
+                      No Attendance Yet
                     </td>
+
                   </tr>
+
                 ) : (
+
                   attendanceList.map((student) => (
+
                     <tr
-                      key={student._id || student.rollNumber}
+                      key={student._id}
                       className="hover:bg-slate-50"
                     >
-                      <td className="p-3 border">{student.rollNumber}</td>
-                      <td className="p-3 border">{student.studentName}</td>
-                      <td className="p-3 border text-green-600 font-bold">
+
+                      <td className="border p-3">
+                        {student.rollNumber}
+                      </td>
+
+                      <td className="border p-3">
+                        {student.studentName}
+                      </td>
+
+                      <td className="border p-3 text-green-600 font-bold">
                         {student.status}
                       </td>
+
                     </tr>
+
                   ))
+
                 )}
+
               </tbody>
+
             </table>
+
           </div>
+
         </div>
+
       </div>
+
     </div>
   );
 }

@@ -1,12 +1,9 @@
-const express = require('express');
-const { protect } = require('../../middleware/authMiddleware');
-const { authorizeRoles } = require('../../middleware/roleMiddleware');
-const { issueCertificate, getMyCertificates, verifyCertificate } = require('./certificate.controller');
+const express    = require("express");
+const router     = express.Router();
+const { protect } = require("../../middleware/authMiddleware");
+const ctrl       = require("./certificate.controller");
 
-const router = express.Router();
-
-router.post('/',            protect, authorizeRoles('organizer', 'admin'), issueCertificate);
-router.get('/my',           protect, authorizeRoles('student'),            getMyCertificates);
-router.get('/verify/:code',                                                 verifyCertificate);
+router.get("/mine",             protect, ctrl.getMyCertificates);
+router.get("/:certId/download", protect, ctrl.downloadCertificate);
 
 module.exports = router;

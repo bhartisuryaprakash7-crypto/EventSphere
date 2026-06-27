@@ -1,8 +1,14 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Get the model (gemini-1.5-flash is fast & free-tier friendly)
-const getGeminiModel = () => genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const getGeminiModel = () => {
+  return genAI.getGenerativeModel({
+    model: "gemini-2.0-flash",
+    systemInstruction: `You are EventSphere Assistant.
+    Help students with events, registrations, attendance, certificates, and platform navigation.
+    Keep answers short and helpful.`
+  });
+};
 
-module.exports = { genAI, getGeminiModel };
+module.exports = { getGeminiModel };
