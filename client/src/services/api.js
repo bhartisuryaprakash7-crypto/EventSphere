@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://eventsphere-1-pcbg.onrender.com/api',  // ✅ Updated
+  baseURL: 'https://eventsphere-c5oe.onrender.com/api',
 });
 
 // Har request mein token automatically lagao
