@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
 
+import api from '../../services/api';
 const teamMembers = [
   {
     name: "Surya Prakash Bharti",
@@ -50,10 +50,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        { email, password, role } // ✅ role bheja
-      );
+   const res = await api.post('/auth/login', { email, password, role });
 
       const { token, user } = res.data;
 

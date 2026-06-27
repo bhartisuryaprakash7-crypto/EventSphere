@@ -1,27 +1,17 @@
 import { useParams } from "react-router-dom";
+import api from '../../../services/api';
 
 const AttendanceMark = () => {
   const { eventId } = useParams();
 
   const markAttendance = async () => {
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/attendance/mark",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            eventId,
-            studentId: "STUDENT001",
-          }),
-        }
-      );
+      const response = await api.post('/attendance/mark', {
+        eventId,
+        studentId: "STUDENT001",
+      });
 
-      const data = await response.json();
-
-      alert(data.message);
+      alert(response.data.message);
     } catch (error) {
       alert("Failed to mark attendance");
     }

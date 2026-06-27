@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import api from '../../services/api';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -35,17 +35,14 @@ const Register = () => {
     try {
       setLoading(true);
 
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        {
-          name:       formData.name,
-          email:      formData.email,
-          password:   formData.password,
-          role:       formData.role,       // ✅ dynamic role
-          rollNo:     formData.rollNo,     // ✅ rollNo add kiya
-          department: formData.branch,     // ✅ department add kiya
-        }
-      );
+      const response = await api.post('/auth/register', {
+  name:       formData.name,
+  email:      formData.email,
+  password:   formData.password,
+  role:       formData.role,
+  rollNo:     formData.rollNo,
+  department: formData.branch,
+});
 
       console.log("Register Success:", response.data);
       alert("Registration successful!");
