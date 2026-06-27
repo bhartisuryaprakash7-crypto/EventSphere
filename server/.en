@@ -1,0 +1,8 @@
+MONGO_URI=mongodb+srv://bhartisuryaprakash7_db_user:pn47Ep4u6Bb1eovh@cluster0.gn8tzir.mongodb.net/?appName=Cluster0
+PORT=5000
+
+JWT_SECRET=eventsphere_secret_2026
+JWT_EXPIRE=7d
+
+
+CLIENT_URL=event-sphere-git-main-manojs-projects-6456498a.vercel.app
